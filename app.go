@@ -3,15 +3,15 @@ package main
 import (
     "database/sql"
     "fmt"
-	"log"
+    "log"
 
+    "encoding/json"
     "net/http"
     "strconv"
-    "encoding/json"
 
-    "github.com/rs/cors"
     "github.com/gorilla/mux"
     _ "github.com/lib/pq"
+    "github.com/rs/cors"
 )
 
 type App struct {

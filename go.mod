@@ -1,6 +1,6 @@
-module github.com/vd84/kartspelserver
+module github.com/vd84/kartserver
 
-go 1.13.8
+go 1.15
 
 require (
 	github.com/gorilla/mux v1.8.0
