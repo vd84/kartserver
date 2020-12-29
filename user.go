@@ -13,20 +13,20 @@ type user struct {
 	Password string `json:"password"`
 }
 
-func (p *user) getUser(db *sql.DB) error {
-	fmt.Println(db.QueryRow("SELECT username, password FROM users WHERE id=" + strconv.Itoa(p.ID)).Scan())
-	return db.QueryRow("SELECT username, password FROM users WHERE id="+strconv.Itoa(p.ID)).Scan(&p.Username, &p.Password)
+func (userParam *user) getUser(db *sql.DB) error {
+	fmt.Println(db.QueryRow("SELECT username, password FROM users WHERE id=" + strconv.Itoa(userParam.ID)).Scan())
+	return db.QueryRow("SELECT username, password FROM users WHERE id="+strconv.Itoa(userParam.ID)).Scan(&userParam.Username, &userParam.Password)
 }
 
-func (p *user) authenticateUser(db *sql.DB) error {
+func (userParam *user) authenticateUser(db *sql.DB) error {
 
-	fmt.Println(p.Username)
+	fmt.Println(userParam.Username)
 
 	var user user
 
 	row := db.QueryRow(
 		"SELECT password FROM users where username=$3 LIMIT $1 OFFSET $2",
-		1, 0, p.Username)
+		1, 0, userParam.Username)
 
 	err := row.Scan(&user.Password)
 	switch err {
@@ -42,7 +42,7 @@ func (p *user) authenticateUser(db *sql.DB) error {
 
 	fmt.Println(user.Password)
 
-	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(p.Password)); err != nil {
+	if err = bcrypt.CompareHashAndPassword([]byte(userParam.Password), []byte(user.Password)); err != nil {
 
 	}
 
@@ -50,27 +50,27 @@ func (p *user) authenticateUser(db *sql.DB) error {
 
 }
 
-func (p *user) updateUser(db *sql.DB) error {
+func (userParam *user) updateUser(db *sql.DB) error {
 	_, err :=
 		db.Exec("UPDATE user SET username=$1, password=$2 WHERE id=$3",
-			p.Username, p.Password, p.ID)
+			userParam.Username, userParam.Password, userParam.ID)
 
 	return err
 }
 
-func (p *user) deleteUser(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM users WHERE id=$1", p.ID)
+func (userParam *user) deleteUser(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM users WHERE id=$1", userParam.ID)
 
 	return err
 }
 
-func (p *user) createUser(db *sql.DB) error {
+func (userParam *user) createUser(db *sql.DB) error {
 
-	hashedPassword := hashPassword(p.Password)
+	hashedPassword := hashPassword(userParam.Password)
 
 	err := db.QueryRow(
 		"INSERT INTO users(username, password) VALUES($1, $2) RETURNING id",
-		p.Username, hashedPassword).Scan(&p.ID)
+		userParam.Username, hashedPassword).Scan(&userParam.ID)
 
 	if err != nil {
 		return err
@@ -116,3 +116,26 @@ func getUsers(db *sql.DB, start, count int) ([]user, error) {
 
 	return users, nil
 }
+
+func (userParam *user) getUserByName(db *sql.DB) (user, error){
+	row := db.QueryRow(
+		"SELECT id, username FROM users WHERE username=$1", userParam.Username )
+
+	var dbUser user
+	err := row.Scan(&dbUser.ID, &dbUser.Username)
+	switch err {
+	case sql.ErrNoRows:
+		fmt.Println("No rows were returned!")
+		return *userParam, err
+	case nil:
+		fmt.Println(dbUser)
+
+	default:
+		panic(err)
+	}
+	return dbUser, nil
+
+}
+
+
+
