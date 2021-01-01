@@ -181,15 +181,18 @@ func (a *App) authenticateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) getUserByName(w http.ResponseWriter, r *http.Request){
-	var u user
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&u); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	defer r.Body.Close()
 
-	returnUser, err := (*user).getUserByName(&u, a.DB)
+	vars := mux.Vars(r)
+	username := vars["name"]
+
+
+
+
+	u := user{ID: 0, Username: username}
+	fmt.Println(username)
+
+
+	returnUser, err := u.getUserByName(a.DB)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -205,5 +208,5 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/user/{id:[0-9]+}", a.updateUser).Methods("PUT")
 	a.Router.HandleFunc("/user/{id:[0-9]+}", a.deleteUser).Methods("DELETE")
 	a.Router.HandleFunc("/auth", a.authenticateUser).Methods("POST")
-	a.Router.HandleFunc("/userByName", a.getUserByName).Methods("GET")
+	a.Router.HandleFunc("/userByName/{name}", a.getUserByName).Methods("GET")
 }

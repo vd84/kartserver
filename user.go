@@ -118,6 +118,7 @@ func getUsers(db *sql.DB, start, count int) ([]user, error) {
 }
 
 func (userParam *user) getUserByName(db *sql.DB) (user, error){
+
 	row := db.QueryRow(
 		"SELECT id, username FROM users WHERE username=$1", userParam.Username )
 
