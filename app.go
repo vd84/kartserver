@@ -201,6 +201,10 @@ func (a *App) getUserByName(w http.ResponseWriter, r *http.Request){
 	respondWithJSON(w, http.StatusOK, returnUser)
  }
 
+ func test(w http.ResponseWriter, r *http.Request){
+	respondWithJSON(w, http.StatusOK, "Hej hej det funkar")
+ }
+
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/users", a.getUsers).Methods("GET")
 	a.Router.HandleFunc("/user", a.createUser).Methods("POST")
@@ -209,4 +213,5 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/user/{id:[0-9]+}", a.deleteUser).Methods("DELETE")
 	a.Router.HandleFunc("/auth", a.authenticateUser).Methods("POST")
 	a.Router.HandleFunc("/userByName/{name}", a.getUserByName).Methods("GET")
+	a.Router.HandleFunc("/test", test ).Methods("GET")
 }
