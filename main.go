@@ -2,16 +2,19 @@
 
 package main
 
-import "os"
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func main() {
 	fmt.Println(os.Getenv("APP_DB_USERNAME"))
 	a := App{}
 	a.Initialize(
-		os.Getenv("APP_DB_USERNAME"),
-		os.Getenv("APP_DB_PASSWORD"),
-		os.Getenv("APP_DB_NAME"))
+		"admin",
+		"admin123",
+		"postgresdb",
+		"postgres.ingress-basic.svc.cluster.local")
 
 	a.Run(":8010")
 }

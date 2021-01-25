@@ -3,8 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"strconv"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type user struct {

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mapgameapi
-        image: vd84/golangapi:latest
+        image: vd84/mapgameapi:4.1
         ports:
         - containerPort: 8010
 ---
@@ -25,7 +25,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
+  - port: 443
     targetPort: 8010
   selector:
     app: mapgameapi
+    

@@ -19,26 +19,24 @@ type App struct {
 	DB     *sql.DB
 }
 
-func (a *App) Initialize(user, password, dbname string) {
+func (a *App) Initialize(user, password, dbname, host string) {
+
 	connectionString :=
-		fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
+	fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable", user, password, dbname, host)
 
 	var err error
 	a.DB, err = sql.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	a.Router = mux.NewRouter()
-
 	a.initializeRoutes()
 
 }
 
 func (a *App) Run(addr string) {
-
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
 	})
 
@@ -202,7 +200,7 @@ func (a *App) getUserByName(w http.ResponseWriter, r *http.Request){
  }
 
  func test(w http.ResponseWriter, r *http.Request){
-	respondWithJSON(w, http.StatusOK, "Hej hej det funkar")
+	respondWithJSON(w, http.StatusOK, "Hej hej det funkar uppdaterad")
  }
 
 func (a *App) initializeRoutes() {
