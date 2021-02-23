@@ -2,19 +2,15 @@
 
 package main
 
-import (
-	"fmt"
-	"os"
-)
-
 func main() {
-	fmt.Println(os.Getenv("APP_DB_USERNAME"))
+
 	a := App{}
 	a.Initialize(
-		"admin",
-		"admin123",
-		"postgresdb",
-		"postgres.ingress-basic.svc.cluster.local")
+		"postgres",
+		"postgres",
+		"postgres",
+		"postgres.default.svc.cluster.local",
+		"postgres")
 
 	a.Run(":8010")
 }

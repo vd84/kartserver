@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 )
@@ -19,11 +20,14 @@ type App struct {
 	DB     *sql.DB
 }
 
-func (a *App) Initialize(user, password, dbname, host string) {
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
-	connectionString :=
-	fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable", user, password, dbname, host)
+func (a *App) Initialize(user, password, dbname, host, db string) {
 
+	connectionString := "user=admin password=admin123 dbname=postgresdb host=postgres.default.svc.cluster.local sslmode=disable"
 	var err error
 	a.DB, err = sql.Open("postgres", connectionString)
 	if err != nil {
@@ -35,11 +39,13 @@ func (a *App) Initialize(user, password, dbname, host string) {
 }
 
 func (a *App) Run(addr string) {
+
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: true,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "HEAD", "OPTIONS"},
+		AllowedHeaders:   []string{"X-Requested-With", "Content-Type", "Authorization"},
 	})
-
 	handler := c.Handler(a.Router)
 
 	log.Fatal(http.ListenAndServe(":8010", handler))
@@ -117,7 +123,6 @@ func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusCreated, p)
 }
-
 func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -145,7 +150,7 @@ func (a *App) updateUser(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	id, err := strconv.Atoi(vars["user_id"])
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid User ID")
 		return
@@ -170,25 +175,23 @@ func (a *App) authenticateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err := p.authenticateUser(a.DB); err != nil {
+	id, err := p.authenticateUser(a.DB)
+
+	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+	respondWithJSON(w, http.StatusOK, id)
 }
 
-func (a *App) getUserByName(w http.ResponseWriter, r *http.Request){
+func (a *App) getUserByName(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	username := vars["name"]
 
-
-
-
 	u := user{ID: 0, Username: username}
 	fmt.Println(username)
-
 
 	returnUser, err := u.getUserByName(a.DB)
 
@@ -197,11 +200,17 @@ func (a *App) getUserByName(w http.ResponseWriter, r *http.Request){
 	}
 
 	respondWithJSON(w, http.StatusOK, returnUser)
- }
+}
 
- func test(w http.ResponseWriter, r *http.Request){
-	respondWithJSON(w, http.StatusOK, "Hej hej det funkar uppdaterad")
- }
+//  func (a *App) geoLocationEndpoint(w http.ResponseWriter, r *http.Request){
+// 	 upgrader.CheckOrigin = func (r *http.Request) bool { return true }
+
+// 	 ws, err := upgrader.Upgrade(w, r, nil) {
+// 		 if err != nil{
+// 			 log.Println(err)
+// 		 }
+// 	 }
+//  }
 
 func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/users", a.getUsers).Methods("GET")
@@ -211,5 +220,5 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc("/user/{id:[0-9]+}", a.deleteUser).Methods("DELETE")
 	a.Router.HandleFunc("/auth", a.authenticateUser).Methods("POST")
 	a.Router.HandleFunc("/userByName/{name}", a.getUserByName).Methods("GET")
-	a.Router.HandleFunc("/test", test ).Methods("GET")
+
 }

@@ -1,8 +1,6 @@
 package main
 
 type category struct {
-	ID int `json:id`
+	ID int `json:category_id`
 	Name string `json:name`
-	
-
 }

@@ -9,31 +9,30 @@ import (
 )
 
 type user struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"user_id"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 func (userParam *user) getUser(db *sql.DB) error {
-	fmt.Println(db.QueryRow("SELECT username, password FROM users WHERE id=" + strconv.Itoa(userParam.ID)).Scan())
-	return db.QueryRow("SELECT username, password FROM users WHERE id="+strconv.Itoa(userParam.ID)).Scan(&userParam.Username, &userParam.Password)
+	return db.QueryRow("SELECT username, password FROM users WHERE user_id="+strconv.Itoa(userParam.ID)).Scan(&userParam.Username, &userParam.Password)
 }
 
-func (userParam *user) authenticateUser(db *sql.DB) error {
+func (userParam *user) authenticateUser(db *sql.DB) (int, error) {
 
-	fmt.Println(userParam.Username)
+	fmt.Println("user password gotten from request: " + userParam.Password)
+	fmt.Println("user password gotten from request encrypted: " + string(hashPassword(userParam.Password)))
 
 	var user user
 
 	row := db.QueryRow(
-		"SELECT password FROM users where username=$3 LIMIT $1 OFFSET $2",
-		1, 0, userParam.Username)
+		"SELECT user_id, password FROM users where username=$1", userParam.Username)
 
-	err := row.Scan(&user.Password)
+	err := row.Scan(&user.ID, &user.Password)
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return err
+		return -9999, err
 	case nil:
 		fmt.Println(user)
 
@@ -41,26 +40,26 @@ func (userParam *user) authenticateUser(db *sql.DB) error {
 		panic(err)
 	}
 
-	fmt.Println(user.Password)
+	fmt.Println("user password stored in db: " + user.Password)
 
-	if err = bcrypt.CompareHashAndPassword([]byte(userParam.Password), []byte(user.Password)); err != nil {
-
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userParam.Password)); err != nil {
+		return -9999, err
 	}
 
-	return err
+	return user.ID, err
 
 }
 
 func (userParam *user) updateUser(db *sql.DB) error {
 	_, err :=
-		db.Exec("UPDATE user SET username=$1, password=$2 WHERE id=$3",
+		db.Exec("UPDATE user SET username=$1, password=$2 WHERE user_id=$3",
 			userParam.Username, userParam.Password, userParam.ID)
 
 	return err
 }
 
 func (userParam *user) deleteUser(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM users WHERE id=$1", userParam.ID)
+	_, err := db.Exec("DELETE FROM users WHERE user_id=$1", userParam.ID)
 
 	return err
 }
@@ -70,7 +69,7 @@ func (userParam *user) createUser(db *sql.DB) error {
 	hashedPassword := hashPassword(userParam.Password)
 
 	err := db.QueryRow(
-		"INSERT INTO users(username, password) VALUES($1, $2) RETURNING id",
+		"INSERT INTO users(username, password) VALUES($1, $2) RETURNING user_id",
 		userParam.Username, hashedPassword).Scan(&userParam.ID)
 
 	if err != nil {
@@ -96,7 +95,7 @@ func hashPassword(password string) []byte {
 
 func getUsers(db *sql.DB, start, count int) ([]user, error) {
 	rows, err := db.Query(
-		"SELECT id, username, password FROM users LIMIT $1 OFFSET $2",
+		"SELECT user_id, username, password FROM users LIMIT $1 OFFSET $2",
 		count, start)
 
 	if err != nil {
@@ -118,10 +117,10 @@ func getUsers(db *sql.DB, start, count int) ([]user, error) {
 	return users, nil
 }
 
-func (userParam *user) getUserByName(db *sql.DB) (user, error){
+func (userParam *user) getUserByName(db *sql.DB) (user, error) {
 
 	row := db.QueryRow(
-		"SELECT id, username FROM users WHERE username=$1", userParam.Username )
+		"SELECT user_id, username FROM users WHERE username=$1", userParam.Username)
 
 	var dbUser user
 	err := row.Scan(&dbUser.ID, &dbUser.Username)
@@ -138,6 +137,3 @@ func (userParam *user) getUserByName(db *sql.DB) (user, error){
 	return dbUser, nil
 
 }
-
-
-

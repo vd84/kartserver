@@ -1,17 +1,17 @@
 package main
 
 import (
-    "os"
-    "testing"   
 	"log"
-	
+	"os"
+	"testing"
+
 	"fmt"
 
-    "net/http"
-    "net/http/httptest"
-    "bytes"
-    "encoding/json"
-    "strconv"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
 )
 
 var a App
@@ -41,10 +41,10 @@ func clearTable() {
 
 const tableCreationQuery = `CREATE TABLE IF NOT EXISTS users
 (
-    id SERIAL,
+    user_id SERIAL,
     username TEXT NOT NULL,
     password TEXT NOT NULL,
-    CONSTRAINT users_pkey PRIMARY KEY (id)
+    CONSTRAINT users_pkey PRIMARY KEY (user_id)
 )`
 
 
@@ -117,8 +117,8 @@ func TestCreateUser(t *testing.T) {
 
     // the id is compared to 1.0 because JSON unmarshaling converts numbers to
     // floats, when the target is a map[string]interface{}
-    if m["id"] != 1.0 {
-        t.Errorf("Expected user ID to be '1'. Got '%v'", m["id"])
+    if m["user_id"] != 1.0 {
+        t.Errorf("Expected user ID to be '1'. Got '%v'", m["user_id"])
     }
 }
 
@@ -166,8 +166,8 @@ func TestUpdateUser(t *testing.T) {
     var m map[string]interface{}
     json.Unmarshal(response.Body.Bytes(), &m)
 
-    if m["id"] != originalUser["id"] {
-        t.Errorf("Expected the id to remain the same (%v). Got %v", originalUser["id"], m["id"])
+    if m["user_id"] != originalUser["user_id"] {
+        t.Errorf("Expected the id to remain the same (%v). Got %v", originalUser["user_id"], m["user_id"])
     }
 
     if m["username"] == originalUser["username"] {
